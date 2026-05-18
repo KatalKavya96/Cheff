@@ -1,0 +1,121 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String       @id @default(cuid())
+  name          String?
+  email         String       @unique
+  planStartDate DateTime?
+  preferences   Json?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  mealLogs    MealLog[]
+  groceryLogs GroceryLog[]
+}
+
+model DietDay {
+  id        String   @id @default(cuid())
+  dayNumber Int      @unique
+  title     String?
+  meals     Meal[]
+  groceries GroceryItem[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Meal {
+  id          String   @id @default(cuid())
+  dietDayId   String
+  mealType    MealType
+  name        String
+  description String?
+  sortOrder   Int      @default(0)
+  ingredients Json
+  recipeSteps Json
+  benefits    Json
+  tags        Json
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  dietDay  DietDay   @relation(fields: [dietDayId], references: [id], onDelete: Cascade)
+  mealLogs MealLog[]
+
+  @@index([dietDayId, mealType])
+}
+
+model MealLog {
+  id             String     @id @default(cuid())
+  userId         String
+  mealId         String
+  date           DateTime
+  cycleDayNumber Int
+  mealType       MealType
+  status         MealStatus @default(NOT_MARKED)
+  notes          String?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  meal Meal @relation(fields: [mealId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, mealId, date])
+  @@index([userId, date])
+}
+
+model GroceryItem {
+  id          String   @id @default(cuid())
+  dietDayId   String
+  name        String
+  quantity    String?
+  relatedMeal String?
+  relatedDish String?
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  dietDay     DietDay      @relation(fields: [dietDayId], references: [id], onDelete: Cascade)
+  groceryLogs GroceryLog[]
+
+  @@index([dietDayId])
+}
+
+model GroceryLog {
+  id             String   @id @default(cuid())
+  userId         String
+  groceryItemId  String
+  date           DateTime
+  cycleDayNumber Int
+  completed      Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  groceryItem GroceryItem @relation(fields: [groceryItemId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, groceryItemId, date])
+  @@index([userId, date])
+}
+
+enum MealType {
+  BREAKFAST
+  MID_MORNING
+  LUNCH
+  PRE_WORKOUT
+  POST_WORKOUT
+  DINNER
+  BEFORE_SLEEP
+}
+
+enum MealStatus {
+  NOT_MARKED
+  ATE
+  SKIPPED
+  REPLACED
+}
