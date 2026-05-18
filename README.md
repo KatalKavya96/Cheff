@@ -6,7 +6,7 @@ A production-ready Next.js App Router web app for a repeating 7-day pure vegetar
 
 - Next.js App Router + TypeScript
 - Tailwind CSS + ShadCN-style UI primitives
-- Prisma ORM + MySQL
+- Prisma ORM + Neon PostgreSQL
 - Recharts
 - React Hook Form + Zod
 - Lucide React icons
@@ -25,10 +25,10 @@ npm install
 cp .env.example .env
 ```
 
-3. Set your MySQL connection:
+3. Set your Neon PostgreSQL connection:
 
 ```env
-DATABASE_URL="mysql://USER:PASSWORD@localhost:3306/diet_tracker"
+DATABASE_URL="postgresql://USER:PASSWORD@HOST/neondb?sslmode=require&channel_binding=require"
 ```
 
 4. Generate Prisma Client and run migrations:
@@ -62,13 +62,36 @@ npx prisma validate
 npx prisma studio
 ```
 
+## Deploying To Vercel + Neon
+
+Set this environment variable in Vercel Project Settings:
+
+```env
+DATABASE_URL="postgresql://USER:PASSWORD@HOST/neondb?sslmode=require&channel_binding=require"
+```
+
+Use this Vercel build command:
+
+```bash
+npx prisma generate && next build
+```
+
+For the first production database setup, run migrations and seed once from your local machine or a trusted deploy job:
+
+```bash
+npx prisma migrate deploy
+npx prisma db seed
+```
+
+Do not run `npx prisma db seed` on every deployment after real tracking data exists, because the seed is designed to reset and reinsert the canonical diet plan data.
+
 ## Features
 
 - Dashboard with active diet day, today’s meals, grocery progress, meal progress, streaks, and weekly average.
 - 7-day plan grid with every meal grouped by breakfast, mid morning, lunch, pre-workout, post-workout, dinner, and before sleep.
 - Meal detail modal with ingredients, simple recipe steps, benefits, key gains, and tags.
 - Grocery planner for today, tomorrow, selected day, and full active week.
-- Date-based grocery and meal logs saved in MySQL.
+- Date-based grocery and meal logs saved in Neon PostgreSQL.
 - Meal tracker statuses: not marked, ate as planned, skipped, replaced.
 - Analysis page with Recharts line chart and scored consistency formula.
 - Benefits page covering dish benefits, important ingredients, gym tips, skin, hair, energy, iron, recovery, and clean bulk.
@@ -94,7 +117,7 @@ src/
   features/             Diet, grocery, tracker, and analysis domain logic
   lib/                  Prisma, date-cycle utilities, API helpers
 prisma/
-  schema.prisma         MySQL schema
+  schema.prisma         PostgreSQL schema
   seed.ts               Full 7-day diet plan, meals, details, groceries
 ```
 
